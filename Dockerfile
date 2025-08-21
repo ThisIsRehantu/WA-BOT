@@ -1,8 +1,7 @@
 # Gunakan Node.js versi stabil
 FROM node:20
 
-# Buat folder kerja
-WORKDIR /app
+
 
 # Copy package.json & package-lock.json dulu (biar cache efisien)
 COPY package*.json ./
