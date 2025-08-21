@@ -91,18 +91,21 @@ if (global.db) {
     ...(global.db || {})
   };
 }
-const pairingCode = true || process.argv.includes("--pairing-code");
-const useMobile = process.argv.includes("--mobile");
+const pairingCode = process.env.PAIRING_CODE === "true"; // aktif/inaktif
+const useMobile   = process.env.USE_MOBILE === "true";   // mode mobile
 const store = makeInMemoryStore({
-  'logger': pino().child({
-    'level': "silent",
-    'stream': "store"
+  logger: pino().child({
+    level: "silent",
+    stream: "store"
   })
 });
-const rl = readline.createInterface({
-  'input': process.stdin,
-  'output': process.stdout
-});
+
+// Ganti readline ke ENV
+const phoneNumber = process.env.PAIRING_NUMBER || ""; 
+if (!phoneNumber) {
+  console.error("❌ PAIRING_NUMBER belum diisi di .env");
+  process.exit(1);
+}
 const question = _0x4ebd20 => new Promise(_0x52bb28 => rl.question(_0x4ebd20, _0x52bb28));
 require("./Shikimori.js");
 nocache("../Shikimori.js", _0x1ee2eb => console.log(color("[ CHANGE ]", "green"), color("'" + _0x1ee2eb + "'", "green"), "Updated"));
