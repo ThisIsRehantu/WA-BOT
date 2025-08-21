@@ -1,5 +1,5 @@
 # Gunakan Node.js versi stabil
-FROM node:18
+FROM node:20
 
 # Buat folder kerja
 WORKDIR /app
