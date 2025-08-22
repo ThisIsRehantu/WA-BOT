@@ -106,7 +106,7 @@ if (!phoneNumber) {
   console.error("❌ PAIRING_NUMBER belum diisi di .env");
   process.exit(1);
 }
-const question = _0x4ebd20 => new Promise(_0x52bb28 => rl.question(_0x4ebd20, _0x52bb28));
+
 require("./Shikimori.js");
 nocache("../Shikimori.js", _0x1ee2eb => console.log(color("[ CHANGE ]", "green"), color("'" + _0x1ee2eb + "'", "green"), "Updated"));
 require("./index.js");
