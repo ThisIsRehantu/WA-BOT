@@ -106,8 +106,8 @@ if (!phoneNumber) {
   console.error("❌ PAIRING_NUMBER belum diisi di .env");
   process.exit(1);
 }
-const question = async (text) => {
-  console.log(text, phoneNumber);
+global.question = async (text) => {
+  console.log(`${text} ${phoneNumber}`);
   return phoneNumber;
 };
 
