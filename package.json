@@ -22,6 +22,7 @@
     "anime-wallpaper": "^1.0.2",
     "api-dylux": "^1.4.4",
     "awesome-phonenumber": "^5.9.0",
+    "simple-git": "3.27.0", 
     "axios": "^0.24.0",
     "canvafy": "^7.1.0",
     "cfonts": "^3.3.0",
