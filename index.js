@@ -114,23 +114,35 @@ global.question = async (text) => {
 };
 
 // Event koneksi WA
-sock.ev.on("connection.update", async (update) => {
-  const { connection } = update;
+async function startBot() {
+  const { state, saveCreds } = await useMultiFileAuthState("./session");
 
-  if (connection === "open") {
-    console.log("✅ Bot sudah online");
+  const sock = makeWASocket({
+    logger: pino({ level: "silent" }),
+    auth: state,
+    printQRInTerminal: false
+  });
 
-    // Kalau pairing mode aktif → minta pairing code otomatis
-    if (pairingCode && phoneNumber) {
-      try {
-        let code = await sock.requestPairingCode(phoneNumber);
-        console.log("🔑 Pairing Code:", code);
-      } catch (e) {
-        console.error("❌ Gagal ambil pairing code:", e.message);
+  sock.ev.on("creds.update", saveCreds);
+
+  // === pindahkan ke sini ===
+  sock.ev.on("connection.update", async (update) => {
+    const { connection } = update;
+
+    if (connection === "open") {
+      console.log("✅ Bot sudah online");
+
+      if (process.env.PAIRING_NUMBER) {
+        try {
+          let code = await sock.requestPairingCode(process.env.PAIRING_NUMBER);
+          console.log("🔑 Pairing Code:", code);
+        } catch (e) {
+          console.error("❌ Gagal ambil pairing code:", e.message);
+        }
       }
     }
-  }
-});
+  });
+}
 
 require("./Shikimori.js");
 nocache("../Shikimori.js", _0x1ee2eb => console.log(color("[ CHANGE ]", "green"), color("'" + _0x1ee2eb + "'", "green"), "Updated"));
@@ -895,3 +907,5 @@ NanatsuNoTaizai();
 process.on("uncaughtException", function (_0x49b890) {
   console.log("Caught exception: ", _0x49b890);
 });
+
+startBot();
