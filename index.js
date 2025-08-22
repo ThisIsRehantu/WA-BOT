@@ -100,16 +100,37 @@ const store = makeInMemoryStore({
   })
 });
 
-// Ganti readline ke ENV
+// Ambil nomor dari ENV
 const phoneNumber = process.env.PAIRING_NUMBER || ""; 
 if (!phoneNumber) {
   console.error("❌ PAIRING_NUMBER belum diisi di .env");
   process.exit(1);
 }
+
+// Ganti readline → ENV
 global.question = async (text) => {
   console.log(`${text} ${phoneNumber}`);
   return phoneNumber;
 };
+
+// Event koneksi WA
+sock.ev.on("connection.update", async (update) => {
+  const { connection } = update;
+
+  if (connection === "open") {
+    console.log("✅ Bot sudah online");
+
+    // Kalau pairing mode aktif → minta pairing code otomatis
+    if (pairingCode && phoneNumber) {
+      try {
+        let code = await sock.requestPairingCode(phoneNumber);
+        console.log("🔑 Pairing Code:", code);
+      } catch (e) {
+        console.error("❌ Gagal ambil pairing code:", e.message);
+      }
+    }
+  }
+});
 
 require("./Shikimori.js");
 nocache("../Shikimori.js", _0x1ee2eb => console.log(color("[ CHANGE ]", "green"), color("'" + _0x1ee2eb + "'", "green"), "Updated"));
