@@ -117,7 +117,7 @@ global.question = async (text) => {
 async function startBot() {
   const { state, saveCreds } = await useMultiFileAuthState("./session");
 
-  const sock = makeWASocket({
+  const sock = XeonBotIncConnect({   // ✅ ubah makeWASocket → XeonBotIncConnect
     logger: pino({ level: "silent" }),
     auth: state,
     printQRInTerminal: false
@@ -125,7 +125,6 @@ async function startBot() {
 
   sock.ev.on("creds.update", saveCreds);
 
-  // === pindahkan ke sini ===
   sock.ev.on("connection.update", async (update) => {
     const { connection } = update;
 
