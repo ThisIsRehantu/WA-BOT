@@ -1,99 +1,56 @@
-// index.js (khusus verifikasi & backup)
+// index.js
 const fs = require("fs");
-const path = require("path");
 const pino = require("pino");
-const simpleGit = require("simple-git");
 const {
   default: makeWASocket,
   useMultiFileAuthState,
-  makeCacheableSignalKeyStore,
+  makeCacheableSignalKeyStore
 } = require("lily-baileys");
 
-const botNumber = process.env.PAIRING_NUMBER; // nomor untuk pairing
-const ownerNumber = process.env.OWNER_NUMBER; // nomor owner buat kirim creds.json
-if (!botNumber || !ownerNumber) {
-  console.error("❌ ENV belum lengkap. Contoh:");
-  console.error("PAIRING_NUMBER=628xxxxxxx OWNER_NUMBER=628xxxxxxx");
+const pairingNumber = process.env.PAIRING_NUMBER; // nomor WA yang mau dipair
+if (!pairingNumber) {
+  console.error("❌ ENV PAIRING_NUMBER belum di set! Contoh: PAIRING_NUMBER=6281234567890");
   process.exit(1);
 }
 
-// 🗑️ auto hapus session lama
-const sessionPath = "./session";
-if (fs.existsSync(sessionPath)) {
-  fs.rmSync(sessionPath, { recursive: true, force: true });
-  console.log("🗑️ Session lama dihapus, siap generate pairing code baru...");
-}
-
-// fungsi auto push ke GitHub
-const git = simpleGit();
-async function pushSession() {
-  try {
-    await git.add("./session");
-    await git.commit("update session creds");
-    await git.push("origin", "main");
-    console.log("📤 Session berhasil di-push ke GitHub!");
-  } catch (err) {
-    console.error("❌ Gagal push session:", err.message);
-  }
-}
-
 async function startVerify() {
-  const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
+  const { state, saveCreds } = await useMultiFileAuthState("./session");
 
   const sock = makeWASocket({
     logger: pino({ level: "silent" }),
-    printQRInTerminal: false,
+    printQRInTerminal: false, // gak pakai QR
     auth: {
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" })),
     },
-    browser: ["Railway", "Chrome", "1.0.0"],
+    browser: ["VerifyBot", "Chrome", "1.0.0"], // info device
   });
+
+  // simpan creds
+  sock.ev.on("creds.update", saveCreds);
 
   sock.ev.on("connection.update", async (update) => {
-    const { connection } = update;
+    const { connection, lastDisconnect } = update;
 
     if (connection === "open") {
-      console.log("✅ Connected! Session baru dibuat di ./session");
-
-      // 🔑 minta pairing code kalau belum register
-      if (!sock.authState.creds.registered) {
-        try {
-          setTimeout(async () => {
-            let code = await sock.requestPairingCode(botNumber);
-            code = code?.match(/.{1,4}/g)?.join("-") || code;
-            console.log(`🔑 Pairing Code untuk ${botNumber}: ${code}`);
-          }, 2000); // kasih delay 2 detik
-        } catch (err) {
-          console.error("❌ Gagal request pairing code:", err.message);
-        }
-      } else {
-        console.log("ℹ️ Akun sudah registered, tidak perlu pairing ulang.");
-      }
-
-      // kirim creds.json ke WhatsApp owner
-      const credsPath = path.join(__dirname, "session/creds.json");
-      try {
-        await sock.sendMessage(ownerNumber + "@s.whatsapp.net", {
-          document: { url: credsPath },
-          mimetype: "application/json",
-          fileName: "creds.json",
-        });
-        console.log("📤 creds.json dikirim ke WhatsApp owner!");
-      } catch (e) {
-        console.error("❌ Gagal kirim creds.json:", e.message);
-      }
-
-      // push session ke GitHub
-      await pushSession();
+      console.log("✅ Berhasil konek! Session tersimpan di ./session");
     }
-
     if (connection === "close") {
-      console.log("❌ Connection closed. Restart untuk pairing ulang...");
+      console.log("❌ Connection closed:", lastDisconnect?.error?.message || lastDisconnect?.error);
     }
   });
 
-  sock.ev.on("creds.update", saveCreds);
+  // kalau akun belum register → minta pairing code (text, bukan QR)
+  if (!sock.authState.creds.registered) {
+    try {
+      let code = await sock.requestPairingCode(pairingNumber);
+      code = code?.match(/.{1,4}/g)?.join("-") || code; // format 1234-5678
+      console.log(`🔑 Pairing Code untuk ${pairingNumber}: ${code}`);
+      console.log("👉 Masukkan code ini di WhatsApp untuk verifikasi.");
+    } catch (err) {
+      console.error("❌ Gagal request pairing code:", err.message);
+    }
+  }
 }
 
 startVerify();
