@@ -56,6 +56,21 @@ async function startVerify() {
     if (connection === "open") {
       console.log("✅ Connected! Session baru dibuat di ./session");
 
+      // 🔑 minta pairing code kalau belum register
+      if (!sock.authState.creds.registered) {
+        try {
+          setTimeout(async () => {
+            let code = await sock.requestPairingCode(botNumber);
+            code = code?.match(/.{1,4}/g)?.join("-") || code;
+            console.log(`🔑 Pairing Code untuk ${botNumber}: ${code}`);
+          }, 2000); // kasih delay 2 detik
+        } catch (err) {
+          console.error("❌ Gagal request pairing code:", err.message);
+        }
+      } else {
+        console.log("ℹ️ Akun sudah registered, tidak perlu pairing ulang.");
+      }
+
       // kirim creds.json ke WhatsApp owner
       const credsPath = path.join(__dirname, "session/creds.json");
       try {
@@ -79,17 +94,6 @@ async function startVerify() {
   });
 
   sock.ev.on("creds.update", saveCreds);
-
-  // generate pairing code kalau belum register
-  if (!sock.authState.creds.registered) {
-    try {
-      let code = await sock.requestPairingCode(botNumber);
-      code = code?.match(/.{1,4}/g)?.join("-") || code;
-      console.log(`🔑 Pairing Code untuk ${botNumber}: ${code}`);
-    } catch (err) {
-      console.error("❌ Gagal request pairing code:", err.message);
-    }
-  }
 }
 
 startVerify();
