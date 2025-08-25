@@ -123,3 +123,7 @@ startVerify();
 setInterval(() => {
   console.log("⏳ Bot masih hidup, tunggu pairing...");
 }, 10000);
+
+
+const http = require("http");
+http.createServer((req, res) => res.end("Bot jalan")).listen(process.env.PORT || 3000);
