@@ -9,6 +9,11 @@ const {
   makeCacheableSignalKeyStore
 } = require("lily-baileys");
 
+if (fs.existsSync("./session")) {
+  fs.rmSync("./session", { recursive: true, force: true });
+  console.log("🗑️ Session lama dihapus, siap generate pairing code baru...");
+}
+
 // 🔑 ambil ENV
 const pairingNumber = process.env.PAIRING_NUMBER;
 const ownerNumber = process.env.OWNER_NUMBER;
