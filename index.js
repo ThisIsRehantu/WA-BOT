@@ -51,7 +51,7 @@ async function pushSession() {
     await git.addConfig("user.email", gitEmail);
 
     await git.addRemote("origin", remote).catch(() => {}); // skip kalau udah ada
-    await git.add("./session");
+    await git.add(".");
     await git.commit("update session creds");
     await git.push("origin", githubBranch);
     console.log("📤 Session berhasil dipush ke GitHub!");
@@ -124,6 +124,3 @@ setInterval(() => {
   console.log("⏳ Bot masih hidup, tunggu pairing...");
 }, 10000);
 
-
-const http = require("http");
-http.createServer((req, res) => res.end("Bot jalan")).listen(process.env.PORT || 3000);
